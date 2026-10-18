@@ -13,6 +13,11 @@
 
     <!-- Original place for VideoSurfaceView -->
 
+    <com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface.AmbientLightView
+        android:id="@+id/ambient_light"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <!-- Add subtitle view. Hides all views behind them. Should be placed at the top. -->
     <com.google.android.exoplayer2.ui.AspectRatioFrameLayout
         android:id="@+id/surface_root"

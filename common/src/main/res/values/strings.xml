@@ -397,6 +397,17 @@
     <string name="audio_sync_fix">Audio sync fix</string>
     <string name="ambilight_ratio_fix_desc">Fixes absent bias lighting. Fixes incorrect aspect ratio or video scale. Fixes blank screenshots. Affects performance!</string>
     <string name="ambilight_ratio_fix">Ambilight/Aspect ratio/Video scale/Screenshots fix</string>
+    <string name="ambient_light">Ambient light</string>
+    <string name="ambient_light_enable">Enable ambient light</string>
+    <string name="ambient_light_enable_desc">Show colors from the video around its edges. Reopen the video after changing this setting. Uses a TextureView and may affect performance on older TVs.</string>
+    <string name="ambient_light_strength">Brightness</string>
+    <string name="ambient_light_subtle">Subtle</string>
+    <string name="ambient_light_normal">Normal</string>
+    <string name="ambient_light_vivid">Vivid</string>
+    <string name="ambient_light_spread">Spread</string>
+    <string name="ambient_light_narrow">Narrow</string>
+    <string name="ambient_light_medium">Medium</string>
+    <string name="ambient_light_wide">Wide</string>
     <string name="force_legacy_codecs_desc">Significantly improves performance on low-end devices. Maximum resolution is 360p.</string>
     <string name="force_legacy_codecs">Force legacy codecs (360p)</string>
     <string name="live_stream_fix_desc">Warn, this tweak disables the rewinding of streams. Significantly improves live stream performance on low-end devices. Maximum resolution is 1080p.</string>

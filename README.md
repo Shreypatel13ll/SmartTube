@@ -33,6 +33,7 @@ SmartTube is a free and open-source media client for Android TVs and TV boxes. I
 - 8K resolution support  
 - 60fps playback  
 - HDR compatibility  
+- Optional ambient light around video (Settings → Player → Ambient light)
 - View live chat  
 - Customizable buttons  
 - Does not require Google Services  

@@ -110,6 +110,9 @@ public class PlayerTweaksData implements ProfileChangeListener {
     private boolean mIsDontResizeVideoToFitDialogEnabled;
     private boolean mIsSuggestionsHorizontallyScrolled;
     private boolean mIsQueueRespectsPlaybackMode;
+    private boolean mIsAmbientLightEnabled;
+    private int mAmbientLightStrength;
+    private int mAmbientLightSpread;
     private final Runnable mPersistDataInt = this::persistDataInt;
 
     private PlayerTweaksData(Context context) {
@@ -184,8 +187,43 @@ public class PlayerTweaksData implements ProfileChangeListener {
         return mIsTextureViewEnabled;
     }
 
+    /** Includes features that require the TextureView playback path. */
+    public boolean isTextureViewRequired() {
+        return mIsTextureViewEnabled || mIsAmbientLightEnabled;
+    }
+
     public void setTextureViewEnabled(boolean enable) {
         mIsTextureViewEnabled = enable;
+        persistData();
+    }
+
+    public boolean isAmbientLightEnabled() {
+        return mIsAmbientLightEnabled;
+    }
+
+    public void setAmbientLightEnabled(boolean enabled) {
+        mIsAmbientLightEnabled = enabled;
+        if (enabled) {
+            mIsTunneledPlaybackEnabled = false; // Tunneled video requires SurfaceView.
+        }
+        persistData();
+    }
+
+    public int getAmbientLightStrength() {
+        return mAmbientLightStrength;
+    }
+
+    public void setAmbientLightStrength(int strength) {
+        mAmbientLightStrength = Math.max(25, Math.min(150, strength));
+        persistData();
+    }
+
+    public int getAmbientLightSpread() {
+        return mAmbientLightSpread;
+    }
+
+    public void setAmbientLightSpread(int spread) {
+        mAmbientLightSpread = Math.max(50, Math.min(100, spread));
         persistData();
     }
 
@@ -261,6 +299,9 @@ public class PlayerTweaksData implements ProfileChangeListener {
 
     public void setTunneledPlaybackEnabled(boolean enable) {
         mIsTunneledPlaybackEnabled = enable;
+        if (enable) {
+            mIsAmbientLightEnabled = false;
+        }
         persistData();
     }
 
@@ -764,6 +805,9 @@ public class PlayerTweaksData implements ProfileChangeListener {
         mIsQuickSkipVideosAltEnabled = Helpers.parseBoolean(split, 58, false);
         mIsAudioTimeStretchingEnabled = Helpers.parseBoolean(split, 59, true);
         mIsQueueRespectsPlaybackMode = Helpers.parseBoolean(split, 60, false);
+        mIsAmbientLightEnabled = Helpers.parseBoolean(split, 61, false);
+        mAmbientLightStrength = Math.max(25, Math.min(150, Helpers.parseInt(split, 62, 100)));
+        mAmbientLightSpread = Math.max(50, Math.min(100, Helpers.parseInt(split, 63, 100)));
 
         updateDefaultValues();
     }
@@ -791,7 +835,8 @@ public class PlayerTweaksData implements ProfileChangeListener {
                 mIsUnsafeAudioFormatsEnabled, null, mIsLoopShortsEnabled, mIsQuickSkipShortsEnabled, mIsRememberPositionOfLiveVideosEnabled,
                 mIsOculusQuestFixEnabled, null, mIsExtraLongSpeedListEnabled, mIsQuickSkipVideosEnabled, mIsNetworkErrorFixingDisabled, mIsCommentsPlacedLeft,
                 null, mIsAudioFocusEnabled, mIsDontResizeVideoToFitDialogEnabled, mIsSuggestionsHorizontallyScrolled,
-                mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled, mIsAudioTimeStretchingEnabled, mIsQueueRespectsPlaybackMode
+                mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled, mIsAudioTimeStretchingEnabled, mIsQueueRespectsPlaybackMode,
+                mIsAmbientLightEnabled, mAmbientLightStrength, mAmbientLightSpread
                 ));
     }
 

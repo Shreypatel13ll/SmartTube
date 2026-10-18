@@ -5,6 +5,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -25,6 +26,7 @@ import com.liskovsoft.smartyoutubetv2.tv.util.ViewUtil;
 public class SurfacePlaybackFragment extends PlaybackSupportFragment {
     private SurfaceWrapper mVideoSurfaceWrapper;
     private AspectRatioFrameLayout mVideoSurfaceRoot;
+    private AmbientLightView mAmbientLightView;
     private SubtitleView mLeanbackSubtitles;
     private int mSubtitlesPadding;
     private int mBackgroundResId;
@@ -39,11 +41,13 @@ public class SurfacePlaybackFragment extends PlaybackSupportFragment {
         if (root == null) {
             throw new IllegalStateException("Can't create root of SurfacePlaybackFragment");
         }
-        mVideoSurfaceWrapper = (PlayerTweaksData.instance(getContext()).isTextureViewEnabled() ||
+        mVideoSurfaceWrapper = (PlayerTweaksData.instance(getContext()).isTextureViewRequired() ||
                 PlayerData.instance(getContext()).getRotationAngle() != 0) ?
                 new TextureViewWrapper(getContext(), root) : new SurfaceViewWrapper(getContext(), root);
         mVideoSurfaceRoot = root.findViewById(com.liskovsoft.smartyoutubetv2.tv.R.id.surface_root);
         mVideoSurfaceRoot.addView(mVideoSurfaceWrapper.getSurfaceView(), 0);
+        mAmbientLightView = root.findViewById(com.liskovsoft.smartyoutubetv2.tv.R.id.ambient_light);
+        bindAmbientLightSource();
         mVideoSurfaceRoot.setAspectRatioListener((targetAspectRatio, naturalAspectRatio, aspectRatioMismatch) -> scaleIfNeeded());
         mLeanbackSubtitles = root.findViewById(com.liskovsoft.smartyoutubetv2.tv.R.id.leanback_subtitles);
         mSubtitlesPadding = mLeanbackSubtitles.getPaddingLeft();
@@ -73,8 +77,23 @@ public class SurfacePlaybackFragment extends PlaybackSupportFragment {
         return mVideoSurfaceWrapper.getSurfaceView();
     }
 
+    protected AmbientLightView getAmbientLightView() {
+        return mAmbientLightView;
+    }
+
+    private void bindAmbientLightSource() {
+        if (mAmbientLightView != null && mVideoSurfaceWrapper.getSurfaceView() instanceof TextureView) {
+            mAmbientLightView.setVideoSource((TextureView) mVideoSurfaceWrapper.getSurfaceView(), mVideoSurfaceRoot);
+        }
+    }
+
     @Override
     public void onDestroyView() {
+        if (mAmbientLightView != null) {
+            mAmbientLightView.setActive(false);
+            mAmbientLightView.setPlayer(null);
+            mAmbientLightView = null;
+        }
         mVideoSurfaceWrapper = null;
         super.onDestroyView();
     }
@@ -113,6 +132,7 @@ public class SurfacePlaybackFragment extends PlaybackSupportFragment {
             mVideoSurfaceRoot.removeView(mVideoSurfaceWrapper.getSurfaceView());
             mVideoSurfaceWrapper = new TextureViewWrapper(getContext(), (ViewGroup) getView());
             mVideoSurfaceRoot.addView(mVideoSurfaceWrapper.getSurfaceView(), 0);
+            bindAmbientLightSource();
             mVideoSurfaceRoot.setRotation(angle);
 
             ((PlayerEngine) this).restartEngine();
@@ -132,6 +152,7 @@ public class SurfacePlaybackFragment extends PlaybackSupportFragment {
             mVideoSurfaceRoot.removeView(mVideoSurfaceWrapper.getSurfaceView());
             mVideoSurfaceWrapper = new TextureViewWrapper(getContext(), (ViewGroup) getView());
             mVideoSurfaceRoot.addView(mVideoSurfaceWrapper.getSurfaceView(), 0);
+            bindAmbientLightSource();
             mVideoSurfaceRoot.setScaleX(scaleX);
 
             ((PlayerEngine) this).restartEngine();

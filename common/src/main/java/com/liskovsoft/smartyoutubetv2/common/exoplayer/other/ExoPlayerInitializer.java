@@ -180,7 +180,7 @@ public class ExoPlayerInitializer {
         // ContentBlock hangs on the last segment: https://www.youtube.com/watch?v=pYymRbfjKv8
 
         // Fix seeking on TextureView (some devices only)
-        if (mPlayerTweaksData.isTextureViewEnabled()) {
+        if (mPlayerTweaksData.isTextureViewRequired()) {
             // Also, live stream (dash) seeking fix
             player.setSeekParameters(SeekParameters.CLOSEST_SYNC);
         }

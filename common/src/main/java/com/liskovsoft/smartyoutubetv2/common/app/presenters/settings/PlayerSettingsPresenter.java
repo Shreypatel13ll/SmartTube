@@ -63,6 +63,7 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
         appendNetworkEngineCategory(settingsPresenter);
         appendVideoBufferCategory(settingsPresenter);
         appendVideoZoomCategory(settingsPresenter);
+        appendAmbientLightCategory(settingsPresenter);
         appendVideoSpeedCategory(settingsPresenter);
         appendAudioLanguageCategory(settingsPresenter);
         appendAudioDelayCategory(settingsPresenter);
@@ -143,6 +144,41 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
     private void appendVideoZoomCategory(AppDialogPresenter settingsPresenter) {
         OptionCategory category = AppDialogUtil.createVideoZoomCategory(getContext());
         settingsPresenter.appendCategory(category);
+    }
+
+    private void appendAmbientLightCategory(AppDialogPresenter settingsPresenter) {
+        settingsPresenter.appendSingleButton(UiOptionItem.from(getContext().getString(R.string.ambient_light), option -> {
+            AppDialogPresenter ambientSettings = AppDialogPresenter.instance(getContext());
+            List<OptionItem> enabled = new ArrayList<>();
+            enabled.add(UiOptionItem.from(getContext().getString(R.string.ambient_light_enable),
+                    getContext().getString(R.string.ambient_light_enable_desc),
+                    item -> mPlayerTweaksData.setAmbientLightEnabled(item.isSelected()),
+                    mPlayerTweaksData.isAmbientLightEnabled()));
+            ambientSettings.appendCheckedCategory(getContext().getString(R.string.ambient_light), enabled);
+
+            List<OptionItem> strength = new ArrayList<>();
+            for (int[] choice : new int[][] {
+                    {R.string.ambient_light_subtle, 50},
+                    {R.string.ambient_light_normal, 100},
+                    {R.string.ambient_light_vivid, 150}}) {
+                strength.add(UiOptionItem.from(getContext().getString(choice[0]),
+                        item -> mPlayerTweaksData.setAmbientLightStrength(choice[1]),
+                        mPlayerTweaksData.getAmbientLightStrength() == choice[1]));
+            }
+            ambientSettings.appendRadioCategory(getContext().getString(R.string.ambient_light_strength), strength);
+
+            List<OptionItem> spread = new ArrayList<>();
+            for (int[] choice : new int[][] {
+                    {R.string.ambient_light_narrow, 50},
+                    {R.string.ambient_light_medium, 75},
+                    {R.string.ambient_light_wide, 100}}) {
+                spread.add(UiOptionItem.from(getContext().getString(choice[0]),
+                        item -> mPlayerTweaksData.setAmbientLightSpread(choice[1]),
+                        mPlayerTweaksData.getAmbientLightSpread() == choice[1]));
+            }
+            ambientSettings.appendRadioCategory(getContext().getString(R.string.ambient_light_spread), spread);
+            ambientSettings.showDialog(getContext().getString(R.string.ambient_light));
+        }));
     }
 
     private void appendAudioLanguageCategory(AppDialogPresenter settingsPresenter) {

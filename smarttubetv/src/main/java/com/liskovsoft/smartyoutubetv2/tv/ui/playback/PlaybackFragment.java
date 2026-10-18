@@ -78,6 +78,7 @@ import com.liskovsoft.smartyoutubetv2.tv.ui.common.UriBackgroundManager;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.misc.ProgressBarManager;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.playerglue.tweaks.PlaybackTransportRowPresenter;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.SeekModePlaybackFragment;
+import com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface.AmbientLightView;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface.SurfacePlaybackFragmentGlueHost;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.BackboneQueueNavigator;
 import com.liskovsoft.smartyoutubetv2.tv.ui.playback.other.VideoPlayerGlue;
@@ -226,6 +227,11 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
     public void onResume() {
         super.onResume();
 
+        AmbientLightView ambientLight = getAmbientLightView();
+        if (ambientLight != null) {
+            ambientLight.setActive(true);
+        }
+
         if ((Util.SDK_INT <= 23 || mPlayer == null)) {
             initializePlayer();
         }
@@ -240,6 +246,10 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
 
     @Override
     public void onPause() {
+        AmbientLightView ambientLight = getAmbientLightView();
+        if (ambientLight != null) {
+            ambientLight.setActive(false);
+        }
         super.onPause();
 
         // NOTE: don't move this into another place! Multiple components rely on it.
@@ -398,6 +408,10 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
     }
 
     private void destroyPlayerObjects() {
+        AmbientLightView ambientLight = getAmbientLightView();
+        if (ambientLight != null) {
+            ambientLight.setPlayer(null);
+        }
         setAdapter(null); // PlayerGlue->LeanbackPlayerAdapter->Context memory leak fix
         if (mRowsAdapter != null) {
             mRowsAdapter.clear();
@@ -484,6 +498,11 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
 
         DefaultRenderersFactory renderersFactory = new CustomOverridesRenderersFactory(getContext());
         mPlayer = mPlayerInitializer.createPlayer(getContext(), renderersFactory, trackSelector);
+
+        AmbientLightView ambientLight = getAmbientLightView();
+        if (ambientLight != null) {
+            ambientLight.setPlayer(mPlayer);
+        }
 
         mExoPlayerController.setPlayer(mPlayer);
     }
