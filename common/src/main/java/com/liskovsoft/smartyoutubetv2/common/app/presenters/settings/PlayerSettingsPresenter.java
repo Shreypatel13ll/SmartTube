@@ -169,9 +169,9 @@ public class PlayerSettingsPresenter extends BasePresenter<Void> {
 
             List<OptionItem> spread = new ArrayList<>();
             for (int[] choice : new int[][] {
-                    {R.string.ambient_light_narrow, 50},
-                    {R.string.ambient_light_medium, 75},
-                    {R.string.ambient_light_wide, 100}}) {
+                    {R.string.ambient_light_narrow, 80},
+                    {R.string.ambient_light_medium, 130},
+                    {R.string.ambient_light_wide, 200}}) {
                 spread.add(UiOptionItem.from(getContext().getString(choice[0]),
                         item -> mPlayerTweaksData.setAmbientLightSpread(choice[1]),
                         mPlayerTweaksData.getAmbientLightSpread() == choice[1]));

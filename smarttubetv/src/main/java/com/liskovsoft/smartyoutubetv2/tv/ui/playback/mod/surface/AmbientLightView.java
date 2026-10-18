@@ -8,25 +8,30 @@ import android.graphics.Paint;
 import android.graphics.RadialGradient;
 import android.graphics.Shader;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.FrameLayout;
 
 import com.google.android.exoplayer2.Player;
+import com.liskovsoft.smartyoutubetv2.common.prefs.AmbientLightDefaults;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 
 /** Native, low-resolution video edge glow. The playback surface remains above this view. */
 public final class AmbientLightView extends View {
+    private static final String TAG = "AmbientLightView";
     private static final int CAPTURE_WIDTH = 64;
     private static final int CAPTURE_HEIGHT = 36;
-    private static final int CAPTURE_INTERVAL_MS = 100;
+    private static final int CAPTURE_INTERVAL_MS =
+            (1_000 + AmbientLightDefaults.FRAME_RATE_LIMIT - 1) / AmbientLightDefaults.FRAME_RATE_LIMIT;
     private static final int GLOW_BANDS = 20;
-    private static final float VIDEO_INSET = 0.07f;
+    private static final float VIDEO_INSET = AmbientLightDefaults.EDGE / 200f;
     private static final float COLOR_BLEND = 0.45f;
 
     private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final int[][] mColors = new int[4][AmbientLightSampler.SAMPLES];
     private final int[][] mNextColors = new int[4][AmbientLightSampler.SAMPLES];
+    private final int[][] mBlurredColors = new int[4][AmbientLightSampler.SAMPLES];
     private final PlayerTweaksData mSettings;
     private final Runnable mCapture = new Runnable() {
         @Override
@@ -39,7 +44,13 @@ public final class AmbientLightView extends View {
                     mPlayer != null && mPlayer.getPlayWhenReady() && mPlayer.getPlaybackState() == Player.STATE_READY) {
                 captureFrame();
             }
-            postDelayed(this, mSettings.isAmbientLightEnabled() ? CAPTURE_INTERVAL_MS : 1_000);
+            int delay = CAPTURE_INTERVAL_MS;
+            if (AmbientLightDefaults.ENERGY_SAVER && mUnchangedFrames > 15) {
+                delay = 1_000;
+            } else if (AmbientLightDefaults.ENERGY_SAVER && mUnchangedFrames > 6) {
+                delay = 200;
+            }
+            postDelayed(this, mSettings.isAmbientLightEnabled() ? delay : 1_000);
         }
     };
     private TextureView mSource;
@@ -47,6 +58,9 @@ public final class AmbientLightView extends View {
     private Player mPlayer;
     private boolean mActive;
     private boolean mHasFrame;
+    private int mLastFrameHash;
+    private int mUnchangedFrames;
+    private int mCaptureFailures;
 
     public AmbientLightView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -56,6 +70,11 @@ public final class AmbientLightView extends View {
     }
 
     public void setVideoSource(TextureView source, View videoRoot) {
+        if (mSource != source) {
+            mHasFrame = false;
+            mUnchangedFrames = 0;
+            mCaptureFailures = 0;
+        }
         mSource = source;
         mVideoRoot = videoRoot;
         updateVideoMargins();
@@ -65,7 +84,9 @@ public final class AmbientLightView extends View {
         mPlayer = player;
         if (player == null) {
             mHasFrame = false;
+            mUnchangedFrames = 0;
             invalidate();
+            updateVideoMargins();
         }
     }
 
@@ -94,7 +115,8 @@ public final class AmbientLightView extends View {
             return;
         }
         FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) mVideoRoot.getLayoutParams();
-        boolean enabled = mSource != null && mSettings.isAmbientLightEnabled();
+        // Never shrink the video when the device cannot provide a readable frame.
+        boolean enabled = mHasFrame && mSource != null && mSettings.isAmbientLightEnabled();
         int horizontal = enabled ? Math.round(getWidth() * VIDEO_INSET) : 0;
         int vertical = enabled ? Math.round(getHeight() * VIDEO_INSET) : 0;
         if (params.leftMargin != horizontal || params.rightMargin != horizontal ||
@@ -111,22 +133,49 @@ public final class AmbientLightView extends View {
             frame = mSource.getBitmap(CAPTURE_WIDTH, CAPTURE_HEIGHT);
         } catch (RuntimeException e) {
             // Protected or device-specific video surfaces may not allow frame reads.
+            if (++mCaptureFailures == 3) {
+                Log.w(TAG, "Video frame capture is unavailable; ambient light disabled for this surface", e);
+                mHasFrame = false;
+                mUnchangedFrames = 0;
+                updateVideoMargins();
+                invalidate();
+            }
             return;
         }
         if (frame == null) {
+            if (++mCaptureFailures == 3) {
+                Log.w(TAG, "Video frame capture returned no bitmap; ambient light disabled for this surface");
+                mHasFrame = false;
+                mUnchangedFrames = 0;
+                updateVideoMargins();
+                invalidate();
+            }
             return;
         }
         try {
             int[] pixels = new int[CAPTURE_WIDTH * CAPTURE_HEIGHT];
             frame.getPixels(pixels, 0, CAPTURE_WIDTH, 0, 0, CAPTURE_WIDTH, CAPTURE_HEIGHT);
+            int frameHash = java.util.Arrays.hashCode(pixels);
+            if (mHasFrame && frameHash == mLastFrameHash) {
+                mUnchangedFrames++;
+                return;
+            }
+            mLastFrameHash = frameHash;
+            mUnchangedFrames = 0;
+            mCaptureFailures = 0;
             AmbientLightSampler.sample(pixels, CAPTURE_WIDTH, CAPTURE_HEIGHT, mNextColors);
+            if (!mHasFrame && !AmbientLightSampler.hasVisibleColor(mNextColors)) {
+                return;
+            }
+            AmbientLightSampler.blur(mNextColors, mBlurredColors, AmbientLightDefaults.BLUR);
             for (int side = 0; side < mColors.length; side++) {
                 for (int sample = 0; sample < AmbientLightSampler.SAMPLES; sample++) {
-                    mColors[side][sample] = mHasFrame ? blend(mColors[side][sample], mNextColors[side][sample]) :
-                            mNextColors[side][sample];
+                    mColors[side][sample] = mHasFrame ? blend(mColors[side][sample], mBlurredColors[side][sample]) :
+                            mBlurredColors[side][sample];
                 }
             }
             mHasFrame = true;
+            updateVideoMargins();
             invalidate();
         } finally {
             frame.recycle();
@@ -216,6 +265,9 @@ public final class AmbientLightView extends View {
 
     private static int bandAlpha(int band, float strength) {
         float distance = (band + 0.5f) / GLOW_BANDS;
-        return Math.min(255, Math.round(175 * strength * (1 - distance) * (1 - distance)));
+        float fadeStart = AmbientLightDefaults.SPREAD_FADE_START / 100f;
+        float fade = Math.max(0f, (distance - fadeStart) / (1f - fadeStart));
+        float curve = AmbientLightDefaults.SPREAD_FADE_CURVE / 10f;
+        return Math.min(255, Math.round(175 * strength * Math.pow(1f - fade, curve)));
     }
 }
