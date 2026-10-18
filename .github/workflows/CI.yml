@@ -55,8 +55,21 @@ jobs:
           path: '**/build/reports/lint-results-*.html'
           if-no-files-found: warn
 
+      - name: Test ambient light sampling
+        run: ./gradlew :smarttubetv:testStbetaDebugUnitTest --tests com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface.AmbientLightSamplerTest
+
       - name: Build with Gradle
         run: ./gradlew clean assembleStbetaDebug
+
+      - name: Save Gradle distribution for local verification
+        run: find "$HOME/.gradle/wrapper/dists" -name gradle-7.5-bin.zip -exec cp {} ./gradle-7.5-bin.zip \;
+
+      - name: Upload Gradle distribution
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0 # v7.0.1
+        with:
+          name: gradle-7.5-bin
+          path: ./gradle-7.5-bin.zip
+          if-no-files-found: error
 
       - name: VirusTotal Scan
         if: ${{ env.HAS_VT_KEY == 'true' }}
