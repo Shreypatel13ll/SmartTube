@@ -223,7 +223,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
     }
 
     public void setAmbientLightSpread(int spread) {
-        mAmbientLightSpread = Math.max(50, Math.min(100, spread));
+        mAmbientLightSpread = Math.max(0, Math.min(400, spread));
         persistData();
     }
 
@@ -805,9 +805,13 @@ public class PlayerTweaksData implements ProfileChangeListener {
         mIsQuickSkipVideosAltEnabled = Helpers.parseBoolean(split, 58, false);
         mIsAudioTimeStretchingEnabled = Helpers.parseBoolean(split, 59, true);
         mIsQueueRespectsPlaybackMode = Helpers.parseBoolean(split, 60, false);
-        mIsAmbientLightEnabled = Helpers.parseBoolean(split, 61, false);
+        mIsAmbientLightEnabled = Helpers.parseBoolean(split, 61, AmbientLightDefaults.ENABLED);
         mAmbientLightStrength = Math.max(25, Math.min(150, Helpers.parseInt(split, 62, 100)));
-        mAmbientLightSpread = Math.max(50, Math.min(100, Helpers.parseInt(split, 63, 100)));
+        mAmbientLightSpread = Math.max(0, Math.min(400, Helpers.parseInt(split, 63, AmbientLightDefaults.SPREAD)));
+        // TextureView and tunneled playback cannot be used together.
+        if (mIsAmbientLightEnabled) {
+            mIsTunneledPlaybackEnabled = false;
+        }
 
         updateDefaultValues();
     }

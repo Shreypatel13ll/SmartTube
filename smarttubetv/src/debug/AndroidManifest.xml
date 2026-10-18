@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Debug-only deterministic video surface for verifying the native glow on an emulator. -->
+        <activity
+            android:name="com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface.AmbientLightDebugActivity"
+            android:exported="true" />
+    </application>
+</manifest>

@@ -1,6 +1,8 @@
 package com.liskovsoft.smartyoutubetv2.tv.ui.playback.mod.surface;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -8,7 +10,7 @@ import java.util.Arrays;
 
 public class AmbientLightSamplerTest {
     @Test
-    public void samplesPictureEdgesInsideLetterboxAndPillarboxBars() {
+    public void skipsHorizontalBarsButNotVerticalBarsLikeReferenceProfile() {
         int width = 24;
         int height = 20;
         int[] frame = new int[width * height];
@@ -28,8 +30,8 @@ public class AmbientLightSamplerTest {
 
         assertEquals(0xffff0000, edges[AmbientLightSampler.TOP][6]);
         assertEquals(0xff00ff00, edges[AmbientLightSampler.BOTTOM][6]);
-        assertEquals(0xff0000ff, edges[AmbientLightSampler.LEFT][6]);
-        assertEquals(0xffffff00, edges[AmbientLightSampler.RIGHT][6]);
+        assertEquals(0xff000000, edges[AmbientLightSampler.LEFT][6]);
+        assertEquals(0xff000000, edges[AmbientLightSampler.RIGHT][6]);
     }
 
     @Test
@@ -45,5 +47,33 @@ public class AmbientLightSamplerTest {
                 assertEquals(0xff000000, color);
             }
         }
+        assertFalse(AmbientLightSampler.hasVisibleColor(edges));
+    }
+
+    @Test
+    public void detectsAVisibleVideoEdge() {
+        int[][] edges = new int[4][AmbientLightSampler.SAMPLES];
+        for (int[] side : edges) {
+            Arrays.fill(side, 0xff000000);
+        }
+        edges[AmbientLightSampler.TOP][5] = 0xffaa0000;
+
+        assertTrue(AmbientLightSampler.hasVisibleColor(edges));
+    }
+
+    @Test
+    public void profileBlurSpreadsEdgeColorToNeighbors() {
+        int[][] edges = new int[4][AmbientLightSampler.SAMPLES];
+        int[][] blurred = new int[4][AmbientLightSampler.SAMPLES];
+        for (int[] side : edges) {
+            Arrays.fill(side, 0xff000000);
+        }
+        edges[AmbientLightSampler.TOP][5] = 0xffff0000;
+
+        AmbientLightSampler.blur(edges, blurred, 25);
+
+        assertEquals(0xff330000, blurred[AmbientLightSampler.TOP][5]);
+        assertEquals(0xff330000, blurred[AmbientLightSampler.TOP][3]);
+        assertEquals(0xff000000, blurred[AmbientLightSampler.TOP][2]);
     }
 }
