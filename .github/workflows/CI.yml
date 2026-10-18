@@ -65,7 +65,7 @@ jobs:
         run: find "$HOME/.gradle/wrapper/dists" -name gradle-7.5-bin.zip -exec cp {} ./gradle-7.5-bin.zip \;
 
       - name: Upload Gradle distribution
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0 # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gradle-7.5-bin
           path: ./gradle-7.5-bin.zip
