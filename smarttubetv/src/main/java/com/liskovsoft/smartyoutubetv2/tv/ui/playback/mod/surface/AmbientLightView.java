@@ -268,6 +268,6 @@ public final class AmbientLightView extends View {
         float fadeStart = AmbientLightDefaults.SPREAD_FADE_START / 100f;
         float fade = Math.max(0f, (distance - fadeStart) / (1f - fadeStart));
         float curve = AmbientLightDefaults.SPREAD_FADE_CURVE / 10f;
-        return Math.min(255, Math.round(175 * strength * Math.pow(1f - fade, curve)));
+        return Math.min(255, Math.round((float) (175 * strength * Math.pow(1f - fade, curve))));
     }
 }
